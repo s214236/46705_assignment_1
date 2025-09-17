@@ -1,6 +1,16 @@
 # template of an environment file for conda
 # update as needed
 
+# To create the environment please run in powershell:
+# conda env create -f environment.yaml
+
+# Update your packages by running this in powershell:
+# conda env update --file environment.yaml --prune
+
+# To activate the environment, run:
+# conda activate gurobi-opt
+# or use the python interpreter selection menu in VS Code
+
 name: gurobi-opt
 channels:
   - conda-forge
@@ -10,8 +20,6 @@ dependencies:
   - gurobi            # gurobi + gurobipy from the official channel
   - numpy>=1.26
   - pandas>=2.1
-  - json
-  - csv
   - matplotlib>=3.8
   - seaborn>=0.13
   - jupyterlab>=4.2
@@ -21,8 +29,7 @@ dependencies:
       - plotly>=5.22
       - tqdm>=4.66
 
-# To create the environment please run:
-# conda env create -f environment.yaml
+
 
 # To install gurobi, enter the following command in the terminal:
 #conda install -c gurobi gurobi

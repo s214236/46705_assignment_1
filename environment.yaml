@@ -11,10 +11,14 @@
 # conda activate gurobi-opt
 # or use the python interpreter selection menu in VS Code
 
+# To add new packages, add them to the environment.yaml file and run the update command above.
+# Check for available version using "pip index versions package-name"
+
 name: gurobi-opt
 channels:
   - conda-forge
   - defaults
+  - gurobi
 dependencies:
   - python=3.11
   - gurobi            # gurobi + gurobipy from the official channel
@@ -24,6 +28,7 @@ dependencies:
   - seaborn>=0.13
   - jupyterlab>=4.2
   - ipykernel>=6.29
+  - xarray>=2025.9
   - pip
   - pip:
       - plotly>=5.22

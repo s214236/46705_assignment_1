@@ -16,3 +16,4 @@ class OptModel:
         question/scenario name (str): Configuration/question identifier.
         ...
     """
+    pass

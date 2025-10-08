@@ -1,5 +1,6 @@
 import os
 import json
+from gurobipy import GRB
 import numpy as np
 
 
@@ -12,6 +13,7 @@ class Parameters:
         self.storage_exists = False
         self.min_combined_load_exists = False
         self.desired_load_exists = False
+        self.battery_size_variable = False
 
         # Extract parameter selections from the data
         pv_data = self.data["appliance_params.json"]["DER"][0]
@@ -41,6 +43,7 @@ class Parameters:
         )  # Revenue for export
 
         # Desired load structure parameters
+        self.diff_penalty = GRB.INFINITY  # Penalty for deviation from desired load
         load_preferences = usage_data["load_preferences"][0]
         if load_preferences["min_total_energy_per_day_hour_equivalent"] is not None:
             self.min_combined_load_exists = True
@@ -97,9 +100,3 @@ class Parameters:
                     data[file_path] = json.load(f)
 
         return data
-
-
-# Testing
-if __name__ == "__main__":
-    parameters = Parameters("question_1a")
-    print("Parameters loaded successfully.")

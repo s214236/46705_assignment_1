@@ -81,6 +81,11 @@ class Optimization_model:
             if self.parameters.storage_exists
             else 0
         )
+        # Extract dual variables (shadow prices) for constraints
+        duals = {}
+        for cname, constr in self.constr.items():
+            duals[cname] = constr.Pi
+        results["duals"] = duals
 
         return results
 

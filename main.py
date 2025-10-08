@@ -5,15 +5,45 @@ import numpy as np
 from gurobipy import GRB
 import matplotlib.pyplot as plt
 
-question = "2b"  # Change this to run different questions
+question = "1a"  # Change this to run different questions
 
 # %% Question 1a
 if question == "1a":
+    # Run model and plot results
     model = Optimization_model()
     model.load_data("question_1a")
     model.create_model()
     model.optimize()
     model.plot_results()
+
+    # Analyze dual variables for different price factors
+    duals_dict = {}
+    price_factors = np.arange(0.25, 2.25, 0.25)
+    for i in price_factors:
+        model = Optimization_model()
+        model.load_data("question_1a")
+        model.parameters.export_price = i * model.parameters.export_price
+        model.parameters.import_price = i * model.parameters.import_price
+        model.create_model()
+        model.optimize()
+        results = model.get_results()
+        duals_dict[i] = list(results["duals"].values())[:-1]
+
+    plt.figure()
+    for i, (key, duals) in enumerate(duals_dict.items()):
+        plt.plot(duals, label=f"Price Factor: {key}")
+
+    plt.xlabel("Time (hours)")
+    plt.ylabel("Shadow Price (DKK/kWh)")
+    plt.title("Dual Variables for Different Price Factors")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # Analyze dual variables for different scales of flat prices
+    duals_dict = {}
+    price_factors = np.arange(0.5, 2.25, 0.25)
+
 
 # %% Question 1b
 if question == "1b":

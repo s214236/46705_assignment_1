@@ -7,6 +7,9 @@
 # Update your packages by running this in powershell:
 # conda env update --file environment.yaml --prune
 
+# OBS also run this line to install the local package (include the dot)
+# pip install -e .
+
 # To activate the environment, run:
 # conda activate gurobi-opt
 # or use the python interpreter selection menu in VS Code

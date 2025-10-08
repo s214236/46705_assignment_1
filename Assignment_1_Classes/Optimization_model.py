@@ -2,7 +2,7 @@ import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
 import matplotlib.pyplot as plt
-from Code.Parameters import Parameters
+from Assignment_1_Classes.Parameters import Parameters
 
 
 class Optimization_model:
@@ -31,33 +31,34 @@ class Optimization_model:
         else:
             self.status = "Model infeasible or unbounded"
 
-    def plot_results(self) -> None:
+    def get_results(self) -> dict:
         if self.model.status != GRB.OPTIMAL:
-            print("No optimal solution to plot.")
-            return
+            raise ValueError("No optimal solution available.")
 
-        # Extract results
-        load = [
+        results = {}
+        results["objective_value"] = self.model.objVal
+        results["load"] = [
             self.model.getVarByName(f"load_{t}").x for t in range(self.parameters.T)
         ]
-        pv_prod = [
+        results["pv_prod"] = [
             self.model.getVarByName(f"gen_{t}").x for t in range(self.parameters.T)
         ]
-        pv_curtailment = [
-            self.parameters.pv_max[t] - pv_prod[t] for t in range(self.parameters.T)
+        results["pv_curtailment"] = [
+            self.parameters.pv_max[t] - results["pv_prod"][t]
+            for t in range(self.parameters.T)
         ]
-        import_grid = [
+        results["import_grid"] = [
             self.model.getVarByName(f"import_{t}").x for t in range(self.parameters.T)
         ]
-        export_grid = [
+        results["export_grid"] = [
             self.model.getVarByName(f"export_{t}").x for t in range(self.parameters.T)
         ]
-        charge = (
+        results["charge"] = (
             [self.model.getVarByName(f"charge_{t}").x for t in range(self.parameters.T)]
             if self.parameters.storage_exists
             else [0] * self.parameters.T
         )
-        discharge = (
+        results["discharge"] = (
             [
                 self.model.getVarByName(f"discharge_{t}").x
                 for t in range(self.parameters.T)
@@ -65,24 +66,41 @@ class Optimization_model:
             if self.parameters.storage_exists
             else [0] * self.parameters.T
         )
-        soc = (
+        results["soc"] = (
             [self.model.getVarByName(f"SOC_{t}").x for t in range(self.parameters.T)]
             if self.parameters.storage_exists
             else [0] * self.parameters.T
         )
+        results["battery_size"] = (
+            self.parameters.storage_capacity
+            * (
+                self.model.getVarByName("battery_scaling").x
+                if self.parameters.battery_size_variable
+                else 1
+            )
+            if self.parameters.storage_exists
+            else 0
+        )
 
+        return results
+
+    def plot_results(self) -> None:
+        # Extract results
+        results = self.get_results()
+
+        # Plotting
         plt.figure()
-        plt.plot(load, label="Load (kW)", color="blue")
-        plt.plot(pv_prod, label="PV Production (kW)", color="orange")
-        plt.plot(pv_curtailment, label="PV Curtailment (kW)", color="red")
+        plt.plot(results["load"], label="Load (kW)", color="blue")
+        plt.plot(results["pv_prod"], label="PV Production (kW)", color="orange")
+        plt.plot(results["pv_curtailment"], label="PV Curtailment (kW)", color="red")
         plt.plot(
-            import_grid,
+            results["import_grid"],
             label="Import from Grid (kW)",
             color="green",
             linestyle="--",
         )
         plt.plot(
-            export_grid,
+            results["export_grid"],
             label="Export to Grid (kW)",
             color="red",
             linestyle="--",
@@ -102,18 +120,20 @@ class Optimization_model:
             )
         if self.parameters.storage_exists:
             plt.plot(
-                charge,
+                results["charge"],
                 label="Storage Charge (kW)",
                 color="cyan",
                 linestyle=":",
             )
             plt.plot(
-                discharge,
+                results["discharge"],
                 label="Storage Discharge (kW)",
                 color="magenta",
                 linestyle=":",
             )
-            plt.plot(soc, label="Storage SOC (kWh)", color="gray", linestyle="--")
+            plt.plot(
+                results["soc"], label="Storage SOC (kWh)", color="gray", linestyle="--"
+            )
         plt.legend()
         plt.xlabel("Time (hours)")
         plt.ylabel("Power (kW) / Energy (kWh) / Price (DKK/kWh)")
@@ -339,3 +359,11 @@ class Optimization_model:
         # Update model to integrate new constraints
         self.model.update()
         self.status += "\nConstraints added"
+
+
+# Testing
+if __name__ == "__main__":
+    model = Optimization_model()
+    print(model.status)
+    model.load_data("question_1a")
+    print(model.status)

@@ -5,7 +5,7 @@ import numpy as np
 from gurobipy import GRB
 import matplotlib.pyplot as plt
 
-question = "1a"  # Change this to run different questions
+question = "1c"  # Change this to run different questions
 
 # %% Question 1a
 if question == "1a":
@@ -14,39 +14,125 @@ if question == "1a":
     model.load_data("question_1a")
     model.create_model()
     model.optimize()
+    base_obj = model.get_results()["objective_value"]
     model.plot_results()
 
     # Analyze dual variables for different price factors
     duals_dict = {}
+    objective_values_factor = {}
     price_factors = np.arange(0.25, 2.25, 0.25)
-    for i in price_factors:
+    for factor in price_factors:
         model = Optimization_model()
         model.load_data("question_1a")
-        model.parameters.export_price = i * model.parameters.export_price
-        model.parameters.import_price = i * model.parameters.import_price
+        model.parameters.export_price = factor * model.parameters.export_price
+        model.parameters.import_price = factor * model.parameters.import_price
         model.create_model()
         model.optimize()
         results = model.get_results()
-        duals_dict[i] = list(results["duals"].values())[:-1]
+        duals_dict[factor] = list(results["duals"].values())[:-1]
+        objective_values_factor[factor] = results["objective_value"]
 
     plt.figure()
     for i, (key, duals) in enumerate(duals_dict.items()):
         plt.plot(duals, label=f"Price Factor: {key}")
-
     plt.xlabel("Time (hours)")
     plt.ylabel("Shadow Price (DKK/kWh)")
-    plt.title("Dual Variables for Different Price Factors")
+    plt.title(
+        "Dual variables of the energy balance constraints for different price factors"
+    )
     plt.legend()
     plt.grid()
     plt.show()
 
     # Analyze dual variables for different scales of flat prices
     duals_dict = {}
-    price_factors = np.arange(0.5, 2.25, 0.25)
+    objective_values_flat_factors = {}
+    price_factors = np.arange(0.25, 2.25, 0.25)
+    for factor in price_factors:
+        model = Optimization_model()
+        model.load_data("question_1a")
+        model.parameters.export_price = (
+            np.ones(model.parameters.T)
+            * np.mean(model.parameters.export_price)
+            * factor
+        )
+        model.parameters.import_price = (
+            np.ones(model.parameters.T)
+            * np.mean(model.parameters.import_price)
+            * factor
+        )
+        model.create_model()
+        model.optimize()
+        results = model.get_results()
+        duals_dict[factor] = list(results["duals"].values())[:-1]
+        objective_values_flat_factors[factor] = results["objective_value"]
 
+    plt.figure()
+    for i, (key, duals) in enumerate(duals_dict.items()):
+        plt.plot(duals, label=f"Price Factor: {key}")
+    plt.xlabel("Time (hours)")
+    plt.ylabel("Shadow Price (DKK/kWh)")
+    plt.title(
+        "Dual variables of the energy balance constraints for different flat price factors"
+    )
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    print("Base Objective Value:", base_obj)
+    print("Objective Values (Price Factors):", objective_values_factor)
+    print("Objective Values (Flat Price Factors):", objective_values_flat_factors)
+
+    plt.figure()
+    plt.plot(
+        list(objective_values_factor.keys()),
+        list(objective_values_factor.values()),
+        label="Scaled Prices",
+    )
+    plt.plot(
+        list(objective_values_flat_factors.keys()),
+        list(objective_values_flat_factors.values()),
+        label="Flat Prices",
+    )
+    plt.xlabel("Price Factor")
+    plt.ylabel("Objective Value")
+    plt.title("Objective Values for Different Price Factors")
+    plt.grid()
+    plt.legend()
+    plt.show()
 
 # %% Question 1b
 if question == "1b":
+    model = Optimization_model()
+    model.load_data("question_1b")
+    model.create_model()
+    model.optimize()
+    model.plot_results()
+
+    diff_penalties = np.arange(0, 5, 0.01)
+    objective_values = {}
+    for penalty in diff_penalties:
+        model = Optimization_model()
+        model.load_data("question_1b")
+        model.parameters.diff_penalty = penalty
+        model.create_model()
+        model.optimize()
+        results = model.get_results()
+        objective_values[penalty] = results["objective_value"]
+
+    plt.figure()
+    plt.plot(
+        list(objective_values.keys()),
+        list(objective_values.values()),
+        label="Objective Value vs Diff Penalty",
+    )
+    plt.xlabel("Deviation Penalty")
+    plt.ylabel("Objective Value")
+    plt.title("Objective Value vs Differentiation Penalty")
+    plt.grid()
+    plt.legend()
+    plt.show()
+
     model = Optimization_model()
     model.load_data("question_1b")
     model.parameters.diff_penalty = 1.75
@@ -54,8 +140,28 @@ if question == "1b":
     model.optimize()
     model.plot_results()
 
+    results = model.get_results()
+    # Extract duals for pos_diff_load and neg_diff_load constraints
+    pos_diff_duals = [v for k, v in results["duals"].items() if "pos_diff_load" in k]
+    neg_diff_duals = [v for k, v in results["duals"].items() if "neg_diff_load" in k]
+    plt.figure()
+    plt.plot(pos_diff_duals, label="positive_diff_load duals")
+    plt.plot(neg_diff_duals, label="negative_diff_load duals")
+    plt.xlabel("Time (hours)")
+    plt.ylabel("Shadow Price (DKK/kWh)")
+    plt.title("Dual variables of the desired load constraints")
+    plt.grid()
+    plt.legend()
+    plt.show()
+
 # %% Question 1c
 if question == "1c":
+    model = Optimization_model()
+    model.load_data("question_1c")
+    model.create_model()
+    model.optimize()
+    model.plot_results()
+
     model = Optimization_model()
     model.load_data("question_1c")
     model.parameters.diff_penalty = 1.75

@@ -1,3 +1,5 @@
+"""Optimization model for energy system using Gurobi."""
+
 import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
@@ -11,7 +13,9 @@ class Optimization_model:
         self.status = "Empty model"
 
     def load_data(self, dataset_folder: str) -> None:
-        self.parameters = Parameters(dataset_folder)
+        self.parameters = Parameters(
+            dataset_folder
+        )  # Load parameters from specified folder using the Parameters class
         self.parameters.diff_penalty = (
             GRB.INFINITY
         )  # Penalty for deviation from desired load
@@ -35,7 +39,7 @@ class Optimization_model:
         if self.model.status != GRB.OPTIMAL:
             raise ValueError("No optimal solution available.")
 
-        results = {}
+        results = {}  # Dictionary to store results
         results["objective_value"] = self.model.objVal
         results["load"] = [
             self.model.getVarByName(f"load_{t}").x for t in range(self.parameters.T)
